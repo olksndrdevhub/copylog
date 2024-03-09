@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"os"
 	"strings"
 	"sync"
 
@@ -31,10 +30,10 @@ func ReadClipboard(clipboardUpdates chan string, ctx context.Context, wg *sync.W
 }
 
 func trimClipboardItem(item string) string {
-	if len(item) > 12 {
+	if len(item) > 40 {
 		// remove newlines
 		item = strings.Replace(item, "\n", "", -1)
-		return item[:12] + "..."
+		return item[:40] + "..."
 	}
 	return item
 }
@@ -53,12 +52,12 @@ func main() {
 	}
 	app := app.NewWithID("com.github.olksndrdevhub.copylog")
 	window := app.NewWindow("CopyLog")
-	icon, error := os.ReadFile("assets/icon.png")
-	if error != nil {
-		println("Error reading icon file.", error)
-	}
-	iconResource := fyne.NewStaticResource("icon.png", icon)
-	window.SetIcon(iconResource)
+	// icon, error := os.ReadFile("assets/icon.png")
+	// if error != nil {
+	// 	println("Error reading icon file.", error)
+	// }
+	// iconResource := fyne.NewStaticResource("icon.png", icon)
+	// window.SetIcon(iconResource)
 	if desk, ok := app.(desktop.App); ok {
 		menu := fyne.NewMenu("CopyLog",
 			fyne.NewMenuItem("Show", func() {
@@ -69,6 +68,14 @@ func main() {
 	window.SetCloseIntercept(func() {
 		window.Hide()
 	})
+	// menuItem1 := fyne.NewMenuItem("Show", nil)
+	// menuItem2 := fyne.NewMenuItem("About", nil)
+	//
+	// newMenu1 := fyne.NewMenu("File", menuItem1, menuItem2)
+	//
+	// menu := fyne.NewMainMenu(newMenu1)
+	//
+	// window.SetMainMenu(menu)
 
 	welcomeText := widget.NewLabel("Welcome to  CopyLog!")
 
@@ -91,6 +98,7 @@ func main() {
 			obj.(*widget.Label).SetText(trimClipboardItem(clipboardListData[id]))
 		},
 	)
+	clipboardItemsList.Resize(fyne.NewSize(300, 0))
 
 	itemDisplayEntry := widget.NewMultiLineEntry()
 	itemDisplayEntry.PlaceHolder = "Selected item will be displayed here..."
@@ -137,16 +145,18 @@ func main() {
 		}
 	}()
 
+	splitLayout := container.NewHSplit(clipboardItemsList, itemDisplayEntry)
+	splitLayout.SetOffset(0.3)
+
 	window.SetContent(container.NewBorder(
 		container.NewHBox(
 			welcomeText, layout.NewSpacer(), itemActionsLayout,
 		),
-		nil,
-		clipboardItemsList,
-		nil,
-		container.NewStack(itemDisplayEntry),
+		nil, nil, nil,
+		splitLayout,
 	))
-	window.Resize(fyne.NewSize(600, 300))
+
+	window.Resize(fyne.NewSize(640, 460))
 	window.ShowAndRun()
 	cancel()
 	wait_group.Wait()
